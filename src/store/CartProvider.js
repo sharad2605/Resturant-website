@@ -1,38 +1,45 @@
-import { useReducer } from 'react';
-
-import CartContext from '../../src/store/Cart-context';
-
-const defaultCartState = {
-  items: [],
-  totalAmount: 0
-};
-
-const cartReducer = (state, action) => {
-  if (action.type === 'ADD') {
-    const updatedItems = state.items.concat(action.item);
-    const updatedTotalAmount = state.totalAmount + action.item.price * action.item.amount;
-    return {
-      items: updatedItems,
-      totalAmount: updatedTotalAmount
-    };
-  }
-  return defaultCartState;
-};
+import React, { useState } from 'react';
+import CartContext from '../store/Cart-context';
 
 const CartProvider = (props) => {
-  const [cartState, dispatchCartAction] = useReducer(cartReducer, defaultCartState);
-
+  const [items, updatedItems]=useState([])
   const addItemToCartHandler = (item) => {
-    dispatchCartAction({type: 'ADD', item: item});
+    const updatedItemsArray = [...items];
+    const existingItemIndex = updatedItemsArray.findIndex((existingItem) => existingItem.id === item.id);
+    if (existingItemIndex !== -1) {
+      // If the item with the same ID exists, update its quantity
+      updatedItemsArray[existingItemIndex].quantity += Number(item.quantity);
+  } else {
+      // If the item with the same ID doesn't exist, add it to the array
+      updatedItemsArray.push(item);
+  }
+  updatedItems(updatedItemsArray);
+    // updateItems([...items,item])
   };
 
   const removeItemFromCartHandler = (id) => {
-    dispatchCartAction({type: 'REMOVE', id: id});
+   const updatedItemsArray = [...items];
+
+        // Find the index of the item with the specified id
+        const itemIndex = updatedItemsArray.findIndex((item) => item.id === id);
+
+        if (itemIndex !== -1) {
+            // Create a copy of the item to avoid modifying the original item
+            const updatedItem = { ...updatedItemsArray[itemIndex] };
+
+            // Decrement the quantity of the item by 1
+            updatedItem.quantity = updatedItem.quantity - 1;
+
+            // Update the item in the array with the updated item
+            updatedItemsArray[itemIndex] = updatedItem;
+
+            // Update the state with the new items array
+            updatedItems(updatedItemsArray);
+        }
   };
 
   const cartContext = {
-    items: cartState.items,
-    totalAmount: cartState.totalAmount,
+    items: items,
     addItem: addItemToCartHandler,
     removeItem: removeItemFromCartHandler,
   };
